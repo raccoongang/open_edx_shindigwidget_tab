@@ -25,7 +25,7 @@ def shindigwidget_dashboard(request, course_id):
         hash_key_user, hash_key_course = get_hash_key_user_and_course(request.user, course, shindig_settings)
 
         if hash_key_user and hash_key_course:
-            iframe_src = 'http://{}{}{}/{}/'.format(shindig_settings['SHINDIG_HOST_SERVER'],
+            iframe_src = 'https://{}{}{}/{}/'.format(shindig_settings['SHINDIG_HOST_SERVER'],
                                                     PATH_WIDGET,
                                                     hash_key_user,
                                                     hash_key_course)
@@ -42,7 +42,7 @@ def get_hash_key_user_and_course(user, course, shindig_settings):
     hash_key_course = None
     headers = {"Authorization": "Token " + shindig_settings['ACCESS_TOKEN']}
 
-    url = 'http://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_USER)
+    url = 'https://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_USER)
     if CourseAccessRole.objects.filter(course_id=course.id, user=user, role__in=['staff', 'instructor']).exists():
         edx_role = 'staff'
     else:
@@ -56,7 +56,7 @@ def get_hash_key_user_and_course(user, course, shindig_settings):
         req_data = req_user.json()
         hash_key_user = req_data.get('hash_key')
 
-    url = 'http://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_COURSE)
+    url = 'https://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_COURSE)
     data = {'org': course.org,
             'number': course.number,
             'run': course.id.run,
