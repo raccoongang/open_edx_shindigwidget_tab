@@ -22,7 +22,7 @@ def shindigwidget_dashboard(request, course_id):
     shindig_settings = get_shindig_settings(course)
 
     if is_valid_settings(shindig_settings):
-        hash_key_user, hash_key_course = get_hash_key_user_and_course(request.user, course, shindig_settings)
+        hash_key_user, hash_key_course = get_hash_key_user_and_course(request, course, shindig_settings)
 
         if hash_key_user and hash_key_course:
             iframe_src = 'https://{}{}{}/{}/'.format(shindig_settings['SHINDIG_HOST_SERVER'],
@@ -37,35 +37,38 @@ def shindigwidget_dashboard(request, course_id):
     return render_to_response("shindigwidget_tab/shindigwidget_tab.html", context)
 
 
-def get_hash_key_user_and_course(user, course, shindig_settings):
+def get_hash_key_user_and_course(request, course, shindig_settings):
     hash_key_user = None
     hash_key_course = None
     headers = {"Authorization": "Token " + shindig_settings['ACCESS_TOKEN']}
-
-    url = 'https://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_USER)
-    if CourseAccessRole.objects.filter(course_id=course.id, user=user, role__in=['staff', 'instructor']).exists():
-        edx_role = 'staff'
-    else:
-        edx_role = 'student'
-    data = {'email': user.email,
-            'username': user.username,
-            'role': edx_role}
-    req_user = requests.post(url, headers=headers, data=data)
-
-    if req_user.status_code == 201:
-        req_data = req_user.json()
-        hash_key_user = req_data.get('hash_key')
 
     url = 'https://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_COURSE)
     data = {'org': course.org,
             'number': course.number,
             'run': course.id.run,
-            'display_name': course.display_name}
+            'display_name': course.display_name,
+            'domain': request.get_host()}
     req_course = requests.post(url, headers=headers, data=data)
 
     if req_course.status_code == 201:
         req_data = req_course.json()
         hash_key_course = req_data.get('hash_key')
+
+    url = 'https://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_USER)
+    if CourseAccessRole.objects.filter(course_id=course.id, user=request.user, role__in=['staff', 'instructor']).exists():
+        edx_role = 'staff'
+    else:
+        edx_role = 'student'
+    data = {'email': request.user.email,
+            'username': request.user.username,
+            'role': edx_role,
+            'hash_key_course': hash_key_course,
+            'domain': request.get_host()}
+    req_user = requests.post(url, headers=headers, data=data)
+
+    if req_user.status_code == 201:
+        req_data = req_user.json()
+        hash_key_user = req_data.get('hash_key')
 
     return hash_key_user, hash_key_course
 
