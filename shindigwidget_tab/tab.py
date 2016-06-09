@@ -1,8 +1,9 @@
 from django.utils.translation import ugettext_noop
-from courseware.tabs import CourseTab
+from .views import get_shindig_settings, is_valid_settings
+from courseware.tabs import EnrolledTab
 
 
-class ShindigwidgetTab(CourseTab):
+class ShindigwidgetTab(EnrolledTab):
 
     name = "shindigwidget_tab"
     title = ugettext_noop("Shindig Office Hours")
@@ -14,4 +15,11 @@ class ShindigwidgetTab(CourseTab):
 
     @classmethod
     def is_enabled(cls, course, user=None):
-        return True
+        if not super(ShindigwidgetTab, cls).is_enabled(course, user=user):
+            return False
+
+        shindig_settings = get_shindig_settings(course)
+        if is_valid_settings(shindig_settings):
+            return True
+
+        return False

@@ -1,6 +1,7 @@
 import os
 import requests
 
+from django.http import JsonResponse
 from edxmako.shortcuts import render_to_response
 from edxmako.paths import add_lookup
 from opaque_keys.edx.keys import CourseKey
@@ -37,6 +38,25 @@ def shindigwidget_dashboard(request, course_id):
     return render_to_response("shindigwidget_tab/shindigwidget_tab.html", context)
 
 
+def new_events(request, course_id):
+    path_img = ''
+    course_key = CourseKey.from_string(course_id)
+    course = get_course_with_access(request.user, "load", course_key)
+    shindig_settings = get_shindig_settings(course)
+
+    if is_valid_settings(shindig_settings):
+        hash_key_user, hash_key_course = get_hash_key_user_and_course(request, course, shindig_settings)
+        headers = {"Authorization": "Token " + shindig_settings['ACCESS_TOKEN']}
+        url = 'https://{}{}{}/new_events/'.format(shindig_settings['SHINDIG_HOST_SERVER'], PATH_HASH_KEY_USER, hash_key_user)
+        req_new_events = requests.post(url, headers=headers, data={'hash_key_course': hash_key_course})
+
+        if req_new_events.status_code == 200:
+            req_data = req_new_events.json()
+            if req_data.get('is_new_events'):
+                path_img = 'https://{}{}'.format(shindig_settings['SHINDIG_HOST_SERVER'], req_data.get('path_img'))
+
+    return JsonResponse({'path_img': path_img})
+
 def get_hash_key_user_and_course(request, course, shindig_settings):
     hash_key_user = None
     hash_key_course = None
@@ -49,7 +69,6 @@ def get_hash_key_user_and_course(request, course, shindig_settings):
             'display_name': course.display_name,
             'domain': request.get_host()}
     req_course = requests.post(url, headers=headers, data=data)
-
     if req_course.status_code == 201:
         req_data = req_course.json()
         hash_key_course = req_data.get('hash_key')
