@@ -1,6 +1,7 @@
 # open_edx_shindigwidget_tab
 1. Install pade to the open edx from next repo: `git@github.com:raccoongang/open_edx_shindigwidget_tab.git`
     * add in `ADDL_INSTALLED_APPS` `'shindigwidget_tab'`
+    * add in `lms/envs/common.py` -> `MAKO_TEMPLATES['main']` `'/edx/app/edxapp/venvs/edxapp/src/shindigwidget-tab/shindigwidget_tab/templates'`
     * add in `lms/urls.py` before static_tab
         <pre>
         url(
