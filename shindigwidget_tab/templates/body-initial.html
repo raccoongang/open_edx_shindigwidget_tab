@@ -1,0 +1,36 @@
+<%!
+from courseware.tabs import get_course_tab_list
+from django.core.urlresolvers import reverse
+%>
+
+<%
+tab_list = []
+url_shindigwidget_tab= ''
+
+if course:
+    tab_list = get_course_tab_list(request, course)
+
+for tab in tab_list:
+    if tab.tab_id == 'shindigwidget_tab':
+      url_shindigwidget_tab = tab.link_func(course, reverse)
+%>
+
+
+
+
+<script type="text/javascript">
+(function() {
+    if ("${url_shindigwidget_tab}"){
+       $.ajax({
+            url: "${url_shindigwidget_tab}" + 'new_events/',
+            type: "GET",
+            success: function (data) {
+                if (data.path_img) {
+                    var $label = $('[href = "' + "${url_shindigwidget_tab}" + '"]');
+                    $label.append('<img src="' + data.path_img + '" width="40" />');
+                }
+            }
+        });
+    }
+}());
+</script>
